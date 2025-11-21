@@ -6,21 +6,23 @@ app = FastAPI()
 @app.get("/memes/{slug}")
 def get_entry(slug: str):
     try:
-        summary = search(slug)
-        
-        if not isinstance(summary, str):
+        entry = search(slug)
+        if not isinstance(entry, dict):
             return {
                 "error": "Entry format is invalid",
-                "actual_type": str(type(summary)),
-                "entry_preview": str(summary)[:100]
+                "actual_type": str(type(entry)),
+                "entry_preview": str(entry)
             }
 
         return {
-            "slug": slug,
-            "summary": summary[:1000]
+            "title": entry.get("title"),
+            "summary": entry.get("about", "")[:1000],
+            "origin": entry.get("origin", "")[:1000],
+            "analysis": entry.get("analysis", "")[:1000]
         }
     except Exception as e:
         return {"error": str(e)}
+
 
 
 
