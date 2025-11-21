@@ -10,19 +10,21 @@ def get_entry(slug: str):
 
         if not isinstance(entry, dict):
             return {
-                "error": "Entry is not a dictionary.",
+                "error": "Entry format is invalid",
                 "actual_type": str(type(entry)),
-                "entry_preview": str(entry)
+                "entry_preview": str(entry)[:100]
             }
 
         return {
             "title": entry.get("title"),
-            "about": entry.get("about", "")[:1000],
             "origin": entry.get("origin", "")[:1000],
-            "spread": entry.get("spread", "")[:1000]
+            "spread": entry.get("spread", "")[:1000],
+            "analysis": entry.get("analysis", "")[:1000],
         }
+
     except Exception as e:
         return {"error": str(e)}
+
 
 
 
