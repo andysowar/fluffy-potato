@@ -8,6 +8,8 @@ import requests
 from bs4 import BeautifulSoup
 from difflib import SequenceMatcher
 
+DEFAULT_TIMEOUT = 10
+
 
 SEARCH_SIMILARITY_THRESHOLD = .4
 
@@ -18,7 +20,12 @@ HEADERS = {'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) Apple
 def search_meme(text):
     """Return a meme name and url from a meme keywords.
     """
-    r = requests.get('http://knowyourmeme.com/search?q=%s' % text, headers=HEADERS)
+    r = requests.get(
+        'http://knowyourmeme.com/search?q=%s' % text,
+        headers=HEADERS,
+        timeout=DEFAULT_TIMEOUT,
+    )
+    r.raise_for_status()
     soup = BeautifulSoup(r.text, 'html.parser')
     memes_list = soup.find(class_='entry_list')
     if memes_list:
@@ -32,7 +39,8 @@ def search(text):
     if not meme_name or SequenceMatcher(None, text, meme_name).ratio() < SEARCH_SIMILARITY_THRESHOLD:
         return None
 
-    r = requests.get(url, headers=HEADERS)
+    r = requests.get(url, headers=HEADERS, timeout=DEFAULT_TIMEOUT)
+    r.raise_for_status()
     soup = BeautifulSoup(r.text, 'html.parser')
 
     def get_section_text(id_):

@@ -1,29 +1,25 @@
-from fastapi import FastAPI
-from memedict import search
+from fastapi import FastAPI, HTTPException
+
+from services import fetch_meme_entry
 
 app = FastAPI()
 
 @app.get("/memes/{slug}")
 def get_entry(slug: str):
     try:
-        entry = search(slug)
+        entry = fetch_meme_entry(slug)
+    except Exception as exc:  # noqa: BLE001 - surfaced as HTTP error
+        raise HTTPException(status_code=502, detail=f"Lookup failed: {exc}") from exc
 
-        if not isinstance(entry, dict):
-            return {
-                "error": "Entry format is invalid",
-                "actual_type": str(type(entry)),
-                "entry_preview": str(entry)[:100]
-            }
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
 
-        return {
-            "title": entry.get("title"),
-            "origin": entry.get("origin", "")[:1000],
-            "spread": entry.get("spread", "")[:1000],
-            "analysis": entry.get("analysis", "")[:1000],
-        }
-
-    except Exception as e:
-        return {"error": str(e)}
+    return {
+        "title": entry.get("title"),
+        "origin": entry.get("origin", "")[:1000],
+        "spread": entry.get("spread", "")[:1000],
+        "analysis": entry.get("analysis", "")[:1000],
+    }
 
 
 
