@@ -38,7 +38,7 @@ def _as_dict(data) -> Optional[Dict]:
     return None
 
 
-def _normalize_entry(raw) -> Optional[Dict[str, str]]:
+def _normalize_entry(raw, fallback_title: Optional[str] = None) -> Optional[Dict[str, str]]:
     """Normalize various entry shapes into a consistent dictionary."""
 
     # Handle list/tuple responses by returning the first successful normalization
@@ -76,15 +76,17 @@ def _normalize_entry(raw) -> Optional[Dict[str, str]]:
         return value.strip() if isinstance(value, str) else str(value).strip() if value is not None else ""
 
     normalized = {
-        "title": clean(_first_present(raw, ["title", "name"])) or None,
-        "origin": clean(_first_present(raw, ["origin", "about", "description"])) or clean(
-            section_text("origin")
-        ),
+        "title": clean(_first_present(raw, ["title", "name", "slug"])) or None,
+        "origin": clean(_first_present(raw, ["origin", "about", "description", "summary"]))
+        or clean(section_text("origin")),
         "spread": clean(_first_present(raw, ["spread", "overview"])) or clean(section_text("spread")),
         "analysis": clean(_first_present(raw, ["analysis", "notes"])) or clean(section_text("analysis")),
     }
 
     # Require at least a title to consider the entry valid
+    if not normalized["title"] and fallback_title:
+        normalized["title"] = fallback_title
+
     if not normalized["title"]:
         return None
 
@@ -104,21 +106,30 @@ def fetch_from_community_api(slug: str) -> Optional[Dict[str, str]]:
     except (requests.RequestException, ValueError):
         return None
 
-    return _normalize_entry(payload)
+    return _normalize_entry(payload, fallback_title=slug)
 
 
 def fetch_with_culturgen(slug: str) -> Optional[Dict[str, str]]:
     if not culturgen:
         return None
 
-    try:
-        result = culturgen.fetch(slug)  # type: ignore[attr-defined]
-    except Exception:
-        result = None
+    def try_fetch(target: str) -> Optional[Dict[str, str]]:
+        try:
+            result = culturgen.fetch(target)  # type: ignore[attr-defined]
+        except Exception:
+            return None
 
-    normalized = _normalize_entry(result)
-    if normalized:
-        return normalized
+        return _normalize_entry(result, fallback_title=slug)
+
+    # Try direct slug, a spaced variant, and the full KYM URL before search
+    for candidate in {
+        slug,
+        slug.replace("-", " "),
+        f"https://knowyourmeme.com/memes/{slug}",
+    }:
+        normalized = try_fetch(candidate)
+        if normalized:
+            return normalized
 
     # If a direct fetch failed, try to resolve via search results (best effort)
     try:
@@ -140,12 +151,7 @@ def fetch_with_culturgen(slug: str) -> Optional[Dict[str, str]]:
         candidate_slug = _first_present(candidate_dict, ["slug", "name", "title"]).replace(" ", "-")
         candidate_url = _first_present(candidate_dict, ["url", "link", "permalink", "href"])
 
-        try:
-            next_result = culturgen.fetch(candidate_url or candidate_slug)  # type: ignore[attr-defined]
-        except Exception:
-            continue
-
-        normalized = _normalize_entry(next_result)
+        normalized = try_fetch(candidate_url or candidate_slug)
         if normalized:
             return normalized
 
@@ -162,4 +168,4 @@ def fetch_meme_entry(slug: str) -> Optional[Dict[str, str]]:
     if entry:
         return entry
 
-    return _normalize_entry(scrape_search(slug))
+    return _normalize_entry(scrape_search(slug), fallback_title=slug)
