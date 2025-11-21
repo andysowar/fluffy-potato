@@ -28,25 +28,24 @@ def search_meme(text):
 
 
 def search(text):
+    """Return a structured meme entry dictionary."""
     meme_name, url = search_meme(text)
     if meme_name and SequenceMatcher(None, text, meme_name).ratio() >= SEARCH_SIMILARITY_THRESHOLD:
         r = requests.get(url, headers=HEADERS)
         soup = BeautifulSoup(r.text, 'html.parser')
 
-        # Extract content sections
         def get_section(id):
-            header = soup.find('h2', {'id': id})
-            if header:
-                next_tag = header.find_next_sibling()
-                if next_tag:
-                    return next_tag.text.strip()
-            return None
+            section = soup.find('h2', {'id': id})
+            if section and section.next_sibling:
+                return section.find_next('p').text.strip()
+            return ""
 
         return {
-            "title": meme_name,
-            "about": get_section('about'),
+            "title": meme_name.split('/')[-1].title(),
             "origin": get_section('origin'),
             "spread": get_section('spread'),
-            "analysis": get_section('analysis')
+            "about": get_section('about'),
         }
     return None
+
+
