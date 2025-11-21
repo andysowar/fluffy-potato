@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, Optional
 
 import requests
 
@@ -158,29 +158,14 @@ def fetch_with_culturgen(slug: str) -> Optional[Dict[str, str]]:
     return None
 
 
-def fetch_meme_entry_with_trace(slug: str) -> Tuple[Optional[Dict[str, str]], List[Dict[str, str]]]:
-    trace: List[Dict[str, str]] = []
-
-    def record(source: str, status: str, detail: str = "") -> None:
-        trace.append({"source": source, "status": status, "detail": detail})
-
+def fetch_meme_entry(slug: str) -> Optional[Dict[str, str]]:
     entry = fetch_from_community_api(slug)
-    record("community_api", "hit" if entry else "miss", "COMMUNITY_API_BASE_URL set" if COMMUNITY_API_BASE_URL else "COMMUNITY_API_BASE_URL not set")
+
     if entry:
-        return entry, trace
+        return entry
 
     entry = fetch_with_culturgen(slug)
-    record("culturgen", "hit" if entry else "miss", "library available" if culturgen else "library missing")
     if entry:
-        return entry, trace
+        return entry
 
-    scrape_result = scrape_search(slug)
-    entry = _normalize_entry(scrape_result, fallback_title=slug)
-    record("scraper", "hit" if entry else "miss", "result found" if scrape_result else "no result")
-
-    return entry, trace
-
-
-def fetch_meme_entry(slug: str) -> Optional[Dict[str, str]]:
-    entry, _ = fetch_meme_entry_with_trace(slug)
-    return entry
+    return _normalize_entry(scrape_search(slug), fallback_title=slug)
