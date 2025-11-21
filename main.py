@@ -9,7 +9,11 @@ def get_entry(slug: str):
         entry = search_meme(slug)
 
         if not isinstance(entry, dict):
-            return {"error": "Entry format is invalid"}
+            return {
+                "error": "Entry is not a dictionary.",
+                "actual_type": str(type(entry)),
+                "entry_preview": str(entry)[:500]  # Only show first 500 chars to avoid large output
+            }
 
         return {
             "title": entry.get("title", slug.replace("-", " ").title()),
@@ -20,6 +24,7 @@ def get_entry(slug: str):
         }
     except Exception as e:
         return {"error": str(e)}
+
 
 
 
