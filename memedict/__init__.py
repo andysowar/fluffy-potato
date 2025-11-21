@@ -29,25 +29,30 @@ def search_meme(text):
 
 def search(text):
     meme_name, url = search_meme(text)
-    if meme_name and SequenceMatcher(None, text, meme_name).ratio() >= SEARCH_SIMILARITY_THRESHOLD:
-        r = requests.get(url, headers=HEADERS)
-        soup = BeautifulSoup(r.text, 'html.parser')
+    if not meme_name or SequenceMatcher(None, text, meme_name).ratio() < SEARCH_SIMILARITY_THRESHOLD:
+        return None
 
-        def get_section_text(section_id):
-            section = soup.find('h2', {'id': section_id})
-            if section:
-                content_tag = section.find_next_sibling()
-                if content_tag:
-                    return content_tag.get_text(strip=True)
-            return ""
+    r = requests.get(url, headers=HEADERS)
+    soup = BeautifulSoup(r.text, 'html.parser')
 
-        return {
-            "title": meme_name.split('/')[-1].title(),
-            "origin": get_section_text("origin"),
-            "spread": get_section_text("spread"),
-            "analysis": get_section_text("analysis"),
-        }
-    return None
+    def get_section_text(id_):
+        header = soup.find('h2', {'id': id_})
+        if header:
+            content = []
+            for sib in header.find_next_siblings():
+                if sib.name == 'h2':
+                    break
+                content.append(sib.get_text(strip=True))
+            return '\n\n'.join(content).strip()
+        return None
+
+    return {
+        "title": soup.find("title").get_text(strip=True) if soup.find("title") else meme_name,
+        "origin": get_section_text("origin"),
+        "spread": get_section_text("spread"),
+        "analysis": get_section_text("analysis"),
+    }
+
 
 
 
