@@ -6,27 +6,38 @@ app = FastAPI()
 @app.get("/memes/{slug}")
 def get_entry(slug: str):
     try:
-        title, content = search_meme(slug)
+        entry = search_meme(slug)
 
-        if not title and not content:
-            return {"error": f"No entry found for slug '{slug}'"}
-
-        if not isinstance(content, dict):
+        # Handle tuple return (e.g., (title, summary))
+        if isinstance(entry, tuple):
+            title, summary = entry
+            if not title and not summary:
+                return {"error": f"No entry found for slug '{slug}'"}
             return {
-                "error": "Content format is invalid",
-                "actual_type": str(type(content)),
-                "content_preview": str(content)[:500]
+                "title": title or "Untitled",
+                "summary": summary or "",
+                "origin": "",
+                "analysis": ""
+            }
+
+        # Handle dict return
+        if isinstance(entry, dict):
+            return {
+                "title": entry.get("title", "Untitled"),
+                "summary": entry.get("summary", "")[:1000],
+                "origin": entry.get("origin", "")[:1000],
+                "analysis": entry.get("analysis", "")[:1000]
             }
 
         return {
-            "title": title or slug.replace("-", " ").title(),
-            "about": content.get("about", "")[:1000],
-            "origin": content.get("origin", "")[:1000],
-            "spread": content.get("spread", "")[:1000],
-            "notable_examples": content.get("notable_examples", "")[:1000],
+            "error": "Entry is not a recognized format.",
+            "actual_type": str(type(entry)),
+            "entry_preview": str(entry)
         }
+
     except Exception as e:
         return {"error": str(e)}
+
 
 
 
