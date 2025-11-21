@@ -5,7 +5,7 @@ from services import fetch_meme_entry
 app = FastAPI()
 
 @app.get("/memes/{slug}")
-def get_entry(slug: str):
+def get_entry(slug: str, trace: bool = False):
     try:
         entry = fetch_meme_entry(slug)
     except Exception as exc:  # noqa: BLE001 - surfaced as HTTP error
