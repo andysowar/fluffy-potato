@@ -8,31 +8,23 @@ def get_entry(slug: str):
     try:
         entry = search_meme(slug)
 
-        # Handle tuple return (e.g., (title, summary))
-        if isinstance(entry, tuple):
-            title, summary = entry
-            if not title and not summary:
-                return {"error": f"No entry found for slug '{slug}'"}
-            return {
-                "title": title or "Untitled",
-                "summary": summary or "",
-                "origin": "",
-                "analysis": ""
-            }
+        if not isinstance(entry, tuple) or len(entry) != 2:
+            return {"error": "Entry format is invalid", "entry_preview": str(entry)}
 
-        # Handle dict return
-        if isinstance(entry, dict):
+        data, _ = entry  # Unpack the tuple
+
+        if not isinstance(data, dict):
             return {
-                "title": entry.get("title", "Untitled"),
-                "summary": entry.get("summary", "")[:1000],
-                "origin": entry.get("origin", "")[:1000],
-                "analysis": entry.get("analysis", "")[:1000]
+                "error": "Entry is not a dictionary.",
+                "actual_type": str(type(data)),
+                "entry_preview": str(data)
             }
 
         return {
-            "error": "Entry is not a recognized format.",
-            "actual_type": str(type(entry)),
-            "entry_preview": str(entry)
+            "title": data.get("title"),
+            "summary": data.get("about", "")[:1000],
+            "origin": data.get("origin", "")[:1000],
+            "analysis": data.get("spread", "")[:1000]
         }
 
     except Exception as e:
