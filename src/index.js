@@ -18,6 +18,11 @@ async function run() {
     return;
   }
 
+  if (command === 'help' || command === '--help' || command === '-h') {
+    printUsage();
+    return;
+  }
+
   if (command === 'search') {
     const [query, limitArg] = args;
     if (!query) {
