@@ -13,36 +13,46 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(cors());
 
+// -------------------------
+// AUDIO DIRECTORY
+// -------------------------
 const AUDIO_DIR = path.join(__dirname, 'audio');
 if (!fs.existsSync(AUDIO_DIR)) {
   fs.mkdirSync(AUDIO_DIR, { recursive: true });
 }
-
 app.use('/audio', express.static(AUDIO_DIR));
 
+// -------------------------
+// AUTH MIDDLEWARE
+// -------------------------
 const PROXY_API_KEY = process.env.PROXY_API_KEY;
-app.use((req, res, next) => {
-  if (req.path.startsWith('/audio')) return next();
 
-const PROXY_API_KEY = process.env.PROXY_API_KEY;
 app.use((req, res, next) => {
+  if (!PROXY_API_KEY) {
+    return res.status(500).json({ error: 'server_misconfigured' });
+  }
+
+  if (req.path.startsWith('/audio')) {
+    return next();
+  }
+
   const key = req.header('x-api-key');
   if (key !== PROXY_API_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+
   next();
 });
 
-const AUDIO_DIR = path.join(__dirname, 'audio');
-if (!fs.existsSync(AUDIO_DIR)) {
-  fs.mkdirSync(AUDIO_DIR, { recursive: true });
-}
-
-app.use('/audio', express.static(AUDIO_DIR));
-
+// -------------------------
+// ELEVENLABS CONFIG
+// -------------------------
 const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY;
 const ELEVEN_BASE_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
 
+// -------------------------
+// HELPERS
+// -------------------------
 const sanitizeFileName = (name) => {
   if (!name) return null;
   const base = path.basename(name);
@@ -71,11 +81,13 @@ const extractFullCleanText = (entry) => {
     .join('\n\n');
 };
 
+// -------------------------
+// ROUTES
+// -------------------------
 app.get('/', (_req, res) => {
   res.json({ status: 'ok', message: 'KYM scraper API running' });
 });
 
-// /search?q=shrek&limit=5
 app.get('/search', async (req, res) => {
   try {
     const q = req.query.q;
@@ -91,8 +103,6 @@ app.get('/search', async (req, res) => {
   }
 });
 
-// /detail?url=https://knowyourmeme.com/memes/shrek
-// or /detail?slug=shrek
 app.get('/detail', async (req, res) => {
   try {
     let url = req.query.url;
@@ -110,8 +120,6 @@ app.get('/detail', async (req, res) => {
   }
 });
 
-// /cleanText?url=https://knowyourmeme.com/memes/shrek
-// or /cleanText?slug=shrek
 app.get('/cleanText', async (req, res) => {
   try {
     let url = req.query.url;
@@ -131,6 +139,9 @@ app.get('/cleanText', async (req, res) => {
   }
 });
 
+// -------------------------
+// GENERATE TTS
+// -------------------------
 app.post('/generate-tts', async (req, res) => {
   try {
     if (!ELEVEN_API_KEY) {
@@ -154,9 +165,6 @@ app.post('/generate-tts', async (req, res) => {
     if (!path.resolve(filePath).startsWith(`${path.resolve(AUDIO_DIR)}${path.sep}`)) {
       return res.status(400).json({ error: 'invalid_output_name' });
     }
-
-    const fileName = output_name || `audio_${Date.now()}.mp3`;
-    const filePath = path.join(AUDIO_DIR, fileName);
 
     const payload = {
       text,
@@ -185,10 +193,7 @@ app.post('/generate-tts', async (req, res) => {
       fileName
     )}`;
 
-    return res.json({
-      status: 'success',
-      url: publicUrl,
-    });
+    return res.json({ status: 'success', url: publicUrl });
   } catch (err) {
     console.error(err.response?.data || err.message || err);
     res.status(500).json({
