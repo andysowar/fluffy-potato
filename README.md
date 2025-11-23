@@ -38,15 +38,7 @@ curl -X POST http://localhost:3000/generate-tts \
   -d '{"text":"Hello world!","voice_id":"your-voice-id"}'
 ```
 
-To test ElevenLabs locally, set `ELEVEN_API_KEY` in your environment and send a request:
-
-```bash
-ELEVEN_API_KEY=your-key npm start
-
-curl -X POST http://localhost:3000/generate-tts \
-  -H "Content-Type: application/json" \
-  -d '{"text":"Hello world!","voice_id":"your-voice-id"}'
-```
+CORS preflight (`OPTIONS`) requests are permitted without `x-api-key`; include the header on the actual request.
 
 ## Heroku deploy
 
