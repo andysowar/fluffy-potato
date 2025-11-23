@@ -1,0 +1,39 @@
+openapi: 3.1.0
+info:
+  title: MemeDict KYM API
+  version: 1.0.0
+  description: API for retrieving Know Your Meme entries using the `memedict` community package.
+servers:
+  - url: https://fluffy-potato-whej.onrender.com
+paths:
+  /entries/{slug}:
+    get:
+      operationId: getMemeBySlug
+      summary: Retrieve a KYM entry by its slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Slug from the KYM URL (e.g. "skibidi-toilet")
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Structured KYM entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  summary:
+                    type: string
+                  origin:
+                    type: string
+                  spread:
+                    type: string
+                  notableExamples:
+                    type: string
+                  analysis:
+                    type: string
