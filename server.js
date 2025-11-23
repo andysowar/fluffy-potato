@@ -13,6 +13,15 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(cors());
 
+const PROXY_API_KEY = process.env.PROXY_API_KEY;
+app.use((req, res, next) => {
+  const key = req.header('x-api-key');
+  if (key !== PROXY_API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+});
+
 const AUDIO_DIR = path.join(__dirname, 'audio');
 if (!fs.existsSync(AUDIO_DIR)) {
   fs.mkdirSync(AUDIO_DIR, { recursive: true });
@@ -22,6 +31,13 @@ app.use('/audio', express.static(AUDIO_DIR));
 
 const ELEVEN_API_KEY = process.env.ELEVEN_API_KEY;
 const ELEVEN_BASE_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
+
+const sanitizeFileName = (name) => {
+  if (!name) return null;
+  const base = path.basename(name);
+  if (!base || base === '.' || base === '..') return null;
+  return base.replace(/[^\w.-]/g, '_');
+};
 
 const extractFullCleanText = (entry) => {
   if (!entry?.sections) return '';
@@ -114,6 +130,18 @@ app.post('/generate-tts', async (req, res) => {
 
     if (!text || !voice_id) {
       return res.status(400).json({ error: 'Missing text or voice_id' });
+    }
+
+    const sanitizedOutput = output_name ? sanitizeFileName(output_name) : null;
+    if (output_name && !sanitizedOutput) {
+      return res.status(400).json({ error: 'invalid_output_name' });
+    }
+
+    const fileName = sanitizedOutput || `audio_${Date.now()}.mp3`;
+    const filePath = path.join(AUDIO_DIR, fileName);
+
+    if (!path.resolve(filePath).startsWith(`${path.resolve(AUDIO_DIR)}${path.sep}`)) {
+      return res.status(400).json({ error: 'invalid_output_name' });
     }
 
     const fileName = output_name || `audio_${Date.now()}.mp3`;
