@@ -13,6 +13,17 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(cors());
 
+const AUDIO_DIR = path.join(__dirname, 'audio');
+if (!fs.existsSync(AUDIO_DIR)) {
+  fs.mkdirSync(AUDIO_DIR, { recursive: true });
+}
+
+app.use('/audio', express.static(AUDIO_DIR));
+
+const PROXY_API_KEY = process.env.PROXY_API_KEY;
+app.use((req, res, next) => {
+  if (req.path.startsWith('/audio')) return next();
+
 const PROXY_API_KEY = process.env.PROXY_API_KEY;
 app.use((req, res, next) => {
   const key = req.header('x-api-key');

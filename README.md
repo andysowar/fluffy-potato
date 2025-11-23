@@ -91,3 +91,5 @@ curl -X POST https://your-app-name.herokuapp.com/generate-tts \
 ```
 
 You will receive JSON containing a public URL to the generated MP3 hosted at `/audio/<file>`.
+
+`/audio/*` URLs are publicly readable and do **not** require the `x-api-key` header so they can be fetched directly by browsers or `<audio>` tags.
