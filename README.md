@@ -8,6 +8,7 @@ A minimal Express API for Know Your Meme that uses [`knowyourmeme-js`](https://w
 - `GET /search?q=<query>&limit=<n>` — search KYM (default limit 10).
 - `GET /detail?url=<full-kym-url>` — fetch full details for a meme page.
 - `GET /detail?slug=<meme-slug>` — same as above, builds the KYM URL for you.
+- `GET /cleanText?slug=<meme-slug>` or `?url=<full-kym-url>` — return the cleaned, markdown-only text for an entry.
 
 Example calls once deployed (replace `your-app-name`):
 
