@@ -3,6 +3,7 @@ from typing import Dict, Iterable, Optional
 
 import requests
 
+from kym_scraper import fetch_details as scrape_details
 from memedict import search as scrape_search
 
 try:  # Prefer the actively maintained culturgen library when available
@@ -169,3 +170,12 @@ def fetch_meme_entry(slug: str) -> Optional[Dict[str, str]]:
         return entry
 
     return _normalize_entry(scrape_search(slug), fallback_title=slug)
+
+
+def fetch_meme_details(slug: str) -> Optional[Dict[str, object]]:
+    """Return structured meme details scraped directly from KnowYourMeme."""
+
+    try:
+        return scrape_details(slug)
+    except Exception:
+        return None
