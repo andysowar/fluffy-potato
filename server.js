@@ -144,6 +144,9 @@ app.post('/generate-tts', async (req, res) => {
       return res.status(400).json({ error: 'invalid_output_name' });
     }
 
+    const fileName = output_name || `audio_${Date.now()}.mp3`;
+    const filePath = path.join(AUDIO_DIR, fileName);
+
     const payload = {
       text,
       model_id: model_id || 'eleven_multilingual_v2',
