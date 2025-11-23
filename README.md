@@ -1,51 +1,48 @@
-# Know Your Meme CLI Wrapper
+# Know Your Meme Heroku API
 
-This project replaces the previous Python scraper with a minimal Node.js CLI that uses [`knowyourmeme-js`](https://www.npmjs.com/package/knowyourmeme-js) to fetch data directly from KnowYourMeme.
+A minimal Express API for Know Your Meme that uses [`knowyourmeme-js`](https://www.npmjs.com/package/knowyourmeme-js). Deploy to Heroku and call it from your Custom GPT.
 
-## Setup
+## Endpoints
 
-Prerequisites:
+- `GET /` — health check.
+- `GET /search?q=<query>&limit=<n>` — search KYM (default limit 10).
+- `GET /detail?url=<full-kym-url>` — fetch full details for a meme page.
+- `GET /detail?slug=<meme-slug>` — same as above, builds the KYM URL for you.
 
-- Node.js 18+ (ES modules enabled)
-- Internet access (required for `npm install` and scraping KnowYourMeme)
+Example calls once deployed (replace `your-app-name`):
 
-Install dependencies:
+```
+https://your-app-name.herokuapp.com/search?q=shrek
+https://your-app-name.herokuapp.com/detail?slug=shrek
+https://your-app-name.herokuapp.com/detail?url=https://knowyourmeme.com/memes/shrek
+```
+
+## Local run
 
 ```bash
 npm install
+npm start
+# then open http://localhost:3000/search?q=shrek
 ```
 
-If you run into registry/network restrictions, try again from a network that can reach npmjs.com.
+## Heroku deploy
 
-## Usage
-
-The CLI exposes two commands—`search` and `detail`. You can invoke it directly with `node` or through `npm start --`.
-
-### Search for memes
+1) Create the app (Heroku CLI):
 
 ```bash
-# Direct execution
-node src/index.js search "shrek" 5
-
-# Or via npm (note the double dash before arguments)
-npm start -- search "shrek" 5
+heroku create your-app-name
 ```
 
-- The final number is an optional limit (defaults to 10).
-- Results are printed as formatted JSON containing each entry's title, link, and thumbnail metadata.
-
-### Get full details for a specific meme URL
+2) Push the repo (builds automatically):
 
 ```bash
-node src/index.js detail https://knowyourmeme.com/memes/shrek-rizz
-# or
-npm start -- detail https://knowyourmeme.com/memes/shrek-rizz
+git push heroku main
 ```
 
-This returns the complete payload from `knowyourmeme-js`, including images, tags, origin, and other metadata.
+3) Open it:
 
-### Tips
+```bash
+heroku open
+```
 
-- Run `node src/index.js --help` (or `npm start -- --help`) for inline usage help.
-- Pipe the JSON anywhere you need: `node src/index.js search "shrek" | jq '.'`.
-- If you only know a meme slug, build the URL as `https://knowyourmeme.com/memes/<slug>` and pass that to `detail`.
+Heroku uses the included `Procfile` and `npm start` to boot `server.js`.

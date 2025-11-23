@@ -1,20 +1,15 @@
 {
-  "name": "fluffy-potato",
+  "name": "kym-api",
   "version": "1.0.0",
-  "description": "Simple Know Your Meme scraper wrapper using knowyourmeme-js.",
+  "description": "Heroku-ready Know Your Meme scraper API using knowyourmeme-js",
   "type": "module",
-  "main": "src/index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node server.js"
   },
-  "keywords": [
-    "knowyourmeme",
-    "scraper",
-    "cli"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
     "knowyourmeme-js": "^1.3.1"
   }
 }
